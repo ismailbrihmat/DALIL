@@ -14,7 +14,14 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSpeechRecognitionEvent, ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
+// import { useSpeechRecognitionEvent, ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
+// NOTE: Voice disabled for Expo Go - using manual input only
+const useSpeechRecognitionEvent = (_event: string, _handler: (data: any) => void) => {};
+const ExpoSpeechRecognitionModule = { 
+  requestPermissionsAsync: async () => ({ granted: false }), 
+  start: async (_options?: any) => {}, 
+  stop: async () => {} 
+};
 
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTripStore } from '@store/tripStore';
@@ -62,9 +69,9 @@ const VoiceOnboardingScreen: React.FC = () => {
   const { updateConfig } = useTripStore();
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
-  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [voiceError, setVoiceError] = useState<string | null>('Voice input requires custom build. Use manual input below.');
   const [audioLevel, setAudioLevel] = useState(0);
-  const [showManualInput, setShowManualInput] = useState(false); 
+  const [showManualInput, setShowManualInput] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [manualBudget, setManualBudget] = useState('');
   const [manualGroupSize, setManualGroupSize] = useState('1');
@@ -78,29 +85,10 @@ const VoiceOnboardingScreen: React.FC = () => {
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
-  useSpeechRecognitionEvent('result', (event) => {
-    const resultEvent = event as any;
-    if (resultEvent.results && resultEvent.results.length > 0) {
-      const transcript = resultEvent.results[0][0]?.transcript || '';
-      setTranscript(transcript);
-    }
-    setIsListening(false);
-  });
-
-  useSpeechRecognitionEvent('error', (event) => {
-    const errorEvent = event as any;
-    setVoiceError(errorEvent.message || errorEvent.error || 'Speech recognition error');
-    setIsListening(false);
-  });
-
-  useSpeechRecognitionEvent('start', () => {
-    setIsListening(true);
-    setVoiceError(null);
-  });
-
-  useSpeechRecognitionEvent('end', () => {
-    setIsListening(false);
-  });
+  useSpeechRecognitionEvent('result', (event: any) => {});
+  useSpeechRecognitionEvent('error', (event: any) => {});
+  useSpeechRecognitionEvent('start', () => {});
+  useSpeechRecognitionEvent('end', () => {});
 
   useEffect(() => {
     const checkPermissions = async () => {
@@ -123,12 +111,7 @@ const VoiceOnboardingScreen: React.FC = () => {
       setTranscript('');
       setVoiceError(null);
       setAudioLevel(0);
-      await ExpoSpeechRecognitionModule.start({
-        lang: 'en-US',
-        interimResults: true,
-        maxAlternatives: 1,
-        continuous: false,
-      });
+      await ExpoSpeechRecognitionModule.start({});
     } catch (e) {
       setVoiceError('Failed to start speech recognition');
       setIsListening(false);
@@ -215,12 +198,10 @@ const VoiceOnboardingScreen: React.FC = () => {
             )}
 
             <TouchableOpacity 
-              style={[styles.voiceButton, isListening && styles.voiceButtonActive]} 
-              onPress={isListening ? stopListening : startListening}
-              disabled={isProcessing}>
-              <Text style={styles.voiceButtonText}>
-                {isListening ? '🎙️ Stop Listening' : '🎤 Start Voice Input'}
-              </Text>
+              style={[styles.voiceButton, { backgroundColor: '#9CA3AF' }]} 
+              onPress={() => {}}
+              disabled={true}>
+              <Text style={styles.voiceButtonText}>Voice Input (Requires Custom Build)</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.manualToggle} onPress={() => setShowManualInput(!showManualInput)}>
